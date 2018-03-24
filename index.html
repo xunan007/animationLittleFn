@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible"
+          content="ie=edge">
+    <title>动画测试</title>
+    <style>
+        .circle1 {
+            width: 100px;
+            height: 100px;
+            background: red;
+            border-radius: 50%;
+        }
+
+        .circle2 {
+            width: 100px;
+            height: 100px;
+            background: purple;
+            border-radius: 50%;
+        }
+
+        .circle3 {
+            width: 100px;
+            height: 100px;
+            background: bisque;
+            border-radius: 50%;
+        }
+
+        .circle4 {
+            width: 100px;
+            height: 100px;
+            background: saddlebrown;
+            border-radius: 50%;
+        }
+
+        .circle5 {
+            width: 100px;
+            height: 100px;
+            background: yellowgreen;
+            border-radius: 50%;
+        }
+
+        .circle6 {
+            width: 100px;
+            height: 100px;
+            background: grey;
+            border-radius: 50%;
+        }
+
+        .circle7 {
+            width: 100px;
+            height: 100px;
+            background: blueviolet;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+
+<body>
+    <p>
+        <button id="all">全部运动</button>
+    </p>
+    <div id="wrapper">
+        <h3>匀速运动</h3>
+        <div class="circle1"></div>
+        <h3>匀加速运动</h3>
+        <div class="circle2"></div>
+        <h3>匀减速运动</h3>
+        <div class="circle3"></div>
+        <h3>变加速运动（加速度不断增大的加速运动）【S = t ^ 3】</h3>
+        <div class="circle4"></div>
+        <h3>变减速运动（加速度不断增大的减速运动）【S = sin(t), (0, π/2)】</h3>
+        <div class="circle5"></div>
+        <h3>变减速运动（加速度不断减小的减速运动）【ln(t), (1, e)】</h3>
+        <div class="circle6"></div>
+        <h3>先加速后减速【分段执行】</h3>
+        <div class="circle7"></div>
+    </div>
+    <script>
+        window.onload = function () {
+            // 触发全部
+            allRun();
+            // 匀速运动
+            speedFn(document.getElementsByClassName('circle1')[0], computedFn.constantFn, 500, 'x', 2000);
+            // 匀加速
+            speedFn(document.getElementsByClassName('circle2')[0], computedFn.constantAccelerateFn, 500, 'x', 2000);
+            // 匀减速
+            speedFn(document.getElementsByClassName('circle3')[0], computedFn.constantDecelerateFn, 500, 'x', 2000);
+            // 变加速运动（加速度不断增大的加速运动）
+            speedFn(document.getElementsByClassName('circle4')[0], computedFn.inconstantFastAUp, 500, 'x', 2000);
+            // 变减速运动（加速度不断变大的减速运动）
+            speedFn(document.getElementsByClassName('circle5')[0], computedFn.inconstantSlowAUp, 500, 'x', 2000);
+            // 变减速运动（加速度不断减小的减速运动）
+            speedFn(document.getElementsByClassName('circle6')[0], computedFn.inconstantSlowADown, 500, 'x', 2000);
+            // 先加速后减速
+            speedEaseFn(document.getElementsByClassName('circle7')[0], [computedFn.constantAccelerateFn, computedFn.constantDecelerateFn], 500, 'x', 2000);
+        }
+        function speedFn(node, exp, distance, direction, duration) {
+            node.addEventListener('click', function () {
+                let self = this;
+                let startTime = new Date();
+                let T = duration;
+                requestAnimationFrame(function step() {
+                    let p = Math.min(1.0, (Date.now() - startTime) / T);
+                    self.style.transform = (direction === 'x' ? 'translateX(' : 'translateY(') + exp.call(null, distance, p) + 'px)';
+                    if (p < 1.0) {
+                        requestAnimationFrame(step);
+                    }
+                });
+            })
+        }
+        function speedEaseFn(node, exp, distance, direction, duration) {
+            node.addEventListener('click', function () {
+                let self = this;
+                let startTime = new Date();
+                let T = duration;
+                let p = null;
+                let tagDistance = null;
+                requestAnimationFrame(function step() {
+                    if (Date.now() - startTime <= T / 2) {
+                        p = Math.min(1.0, (Date.now() - startTime) / (T / 2));
+                        tagDistance = exp[0].call(null, distance / 2, p);
+                        self.style.transform = (direction === 'x' ? 'translateX(' : 'translateY(') + tagDistance + 'px)';
+                    } else {
+                        p = Math.min(1.0, (Date.now() - startTime) / (T / 2) - 1);
+                        self.style.transform = (direction === 'x' ? 'translateX(' : 'translateY(') + (tagDistance + exp[1].call(null, distance - tagDistance, p)) + 'px)';
+                    }
+                    if (Date.now() - startTime < T) {
+                        requestAnimationFrame(step);
+                    }
+                });
+            })
+        }
+        function allRun() {
+            document.getElementById('all').addEventListener('click', function () {
+                let arr = [...document.getElementById('wrapper').children].filter((node) => {
+                    return node.nodeName === 'DIV';
+                });
+                arr.forEach((el) => {
+                    el.click();
+                })
+            });
+        }
+        let computedFn = {
+            tag: null,
+            // 匀速运动
+            constantFn: function (distance, percent) {
+                return distance * percent;
+            },
+            // 匀加速运动
+            constantAccelerateFn: function (distance, percent) {
+                return distance * Math.pow(percent, 2);
+            },
+            // 匀减速运动
+            constantDecelerateFn: function (distance, percent) {
+                return distance * (2 * percent - Math.pow(percent, 2));
+            },
+            // 变加速运动，加速度不断增大的加速运动，S = t ^ 3
+            inconstantFastAUp: function (distance, percent) {
+                return distance * Math.pow(percent, 3);
+            },
+            // 变减速运动，加速度不断增大（绝对值增大）的减速运动。（0-π/2） S = sin(t)
+            inconstantSlowAUp: function (distance, percent) {
+                return distance * (Math.sin(Math.PI * 0.5 * percent));
+            },
+            // 变减速运动，加速度不断减小（绝对值减小）的减速运动。 ln(t)
+            inconstantSlowADown: function (distance, percent) {
+                return distance * (Math.log((Math.E - 1) * percent + 1));
+            }
+        }
+    </script>
+</body>
+
+</html>

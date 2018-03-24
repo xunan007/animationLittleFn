@@ -142,7 +142,7 @@ function speedEaseFn(node, exp, distance, direction, duration) {
 
 ### 关于样式的获取
 
-如果CSS样式不是直接卸载标签的`style`属性中，是无法通过`dom.style.xxx`进行访问的。
+如果CSS样式不是直接写在标签的`style`属性中，是无法通过`dom.style.xxx`进行访问的。
 
 此时必须需用全局函数`getComputedStyle(node)[attr]`来访问，这个属性只是**只读**的，它会计算相关DOM最终的样式。
 
